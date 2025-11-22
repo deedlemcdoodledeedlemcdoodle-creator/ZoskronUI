@@ -1,10 +1,8 @@
--- Z-Lite UI Library (SICK MODE VISUAL UPGRADE)
--- Includes: Windows, Tabs, Buttons, Labels, Toggles, Sliders, Dropdowns, Notifications
-
+-- Z-Lite UI Library (Fixed + Section Support + Stable)
 local library = {}
 library.__index = library
 
--- NOTIFICATION SYSTEM --
+-- NOTIFICATION SYSTEM
 local function createNotification(text)
     local ScreenGui = game.CoreGui:FindFirstChild("ZLite_UI")
     if not ScreenGui then return end
@@ -12,8 +10,8 @@ local function createNotification(text)
     local Notify = Instance.new("TextLabel")
     Notify.Size = UDim2.new(0, 250, 0, 35)
     Notify.Position = UDim2.new(1, -260, 1, -50)
-    Notify.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    Notify.TextColor3 = Color3.new(1, 1, 1)
+    Notify.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    Notify.TextColor3 = Color3.new(1,1,1)
     Notify.Font = Enum.Font.Gotham
     Notify.TextSize = 14
     Notify.Text = text
@@ -25,7 +23,7 @@ local function createNotification(text)
     end)
 end
 
--- INIT --
+-- INIT
 function library.Init()
     local self = setmetatable({}, library)
 
@@ -37,55 +35,56 @@ function library.Init()
     return self
 end
 
--- WINDOW --
+-- WINDOW
 function library:Window(title)
     local window = {}
-    setmetatable(window, window)
+    window.__index = window
+
+    setmetatable(window, {
+        __index = self
+    })
 
     local Frame = Instance.new("Frame")
     Frame.Size = UDim2.new(0, 260, 0, 210)
     Frame.Position = UDim2.new(0.5, -130, 0.5, -105)
     Frame.Active = true
     Frame.Draggable = true
-    Frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    Frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+    Frame.Parent = self.ScreenGui
 
-    -- GRADIENT ORANGE → BLACK
     local Grad = Instance.new("UIGradient")
     Grad.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 140, 0)), -- Orange
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))      -- Black
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,140,0)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0))
     })
     Grad.Rotation = 90
     Grad.Parent = Frame
 
     local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 12)
+    Corner.CornerRadius = UDim.new(0,12)
     Corner.Parent = Frame
-
-    Frame.Parent = self.ScreenGui
 
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, 0, 0, 32)
-    Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    Title.BackgroundColor3 = Color3.fromRGB(45,45,45)
     Title.Text = title
     Title.Font = Enum.Font.GothamBold
-    Title.TextColor3 = Color3.new(1, 1, 1)
+    Title.TextColor3 = Color3.new(1,1,1)
     Title.TextSize = 16
     Title.Parent = Frame
 
     local TitleCorner = Instance.new("UICorner")
-    TitleCorner.CornerRadius = UDim.new(0, 8)
+    TitleCorner.CornerRadius = UDim.new(0,8)
     TitleCorner.Parent = Title
 
-    -- TAB BAR
     local TabBar = Instance.new("Frame")
     TabBar.Size = UDim2.new(1, 0, 0, 30)
-    TabBar.Position = UDim2.new(0, 0, 0, 32)
-    TabBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    TabBar.Position = UDim2.new(0,0,0,32)
+    TabBar.BackgroundColor3 = Color3.fromRGB(40,40,40)
     TabBar.Parent = Frame
 
     local TabCorner = Instance.new("UICorner")
-    TabCorner.CornerRadius = UDim.new(0, 8)
+    TabCorner.CornerRadius = UDim.new(0,8)
     TabCorner.Parent = TabBar
 
     local TabList = Instance.new("UIListLayout")
@@ -94,37 +93,38 @@ function library:Window(title)
     TabList.Parent = TabBar
 
     local Pages = Instance.new("Folder")
+    Pages.Name = "Pages"
     Pages.Parent = Frame
 
-    -- TAB CREATION --
     function window:Tab(name)
         local tab = {}
+        tab.__index = tab
 
         local Button = Instance.new("TextButton")
         Button.Size = UDim2.new(0, 80, 1, 0)
         Button.Text = name
-        Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        Button.TextColor3 = Color3.new(1, 1, 1)
+        Button.BackgroundColor3 = Color3.fromRGB(50,50,50)
+        Button.TextColor3 = Color3.new(1,1,1)
         Button.Font = Enum.Font.Gotham
         Button.TextSize = 14
         Button.Parent = TabBar
 
         local BtnCorner = Instance.new("UICorner")
-        BtnCorner.CornerRadius = UDim.new(0, 6)
+        BtnCorner.CornerRadius = UDim.new(0,6)
         BtnCorner.Parent = Button
 
         local Page = Instance.new("Frame")
         Page.Size = UDim2.new(1, 0, 1, -62)
-        Page.Position = UDim2.new(0, 0, 0, 62)
+        Page.Position = UDim2.new(0,0,0,62)
         Page.BackgroundTransparency = 1
         Page.Visible = false
         Page.Parent = Pages
 
         local List = Instance.new("UIListLayout")
-        List.Padding = UDim.new(0, 6)
+        List.Padding = UDim.new(0,6)
         List.Parent = Page
 
-        -- Switch tabs
+        -- Switch Page
         Button.MouseButton1Click:Connect(function()
             for _, p in ipairs(Pages:GetChildren()) do
                 p.Visible = false
@@ -132,17 +132,26 @@ function library:Window(title)
             Page.Visible = true
         end)
 
-        ------------------------------------------------
-        -- ELEMENTS INSIDE TABS
-        ------------------------------------------------
+        -- UI ELEMENTS --
 
         function tab:Label(text)
             local Label = Instance.new("TextLabel")
             Label.Size = UDim2.new(1, -10, 0, 25)
-            Label.Text = text
             Label.BackgroundTransparency = 1
-            Label.TextColor3 = Color3.new(1, 1, 1)
+            Label.Text = text
+            Label.TextColor3 = Color3.new(1,1,1)
             Label.Font = Enum.Font.Gotham
+            Label.TextSize = 14
+            Label.Parent = Page
+        end
+
+        function tab:Section(text)
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -10, 0, 25)
+            Label.BackgroundTransparency = 1
+            Label.Text = "— " .. text .. " —"
+            Label.TextColor3 = Color3.new(1,1,1)
+            Label.Font = Enum.Font.GothamBold
             Label.TextSize = 14
             Label.Parent = Page
         end
@@ -151,14 +160,14 @@ function library:Window(title)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, -10, 0, 30)
             Btn.Text = text
-            Btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-            Btn.TextColor3 = Color3.new(1, 1, 1)
+            Btn.BackgroundColor3 = Color3.fromRGB(60,60,60)
+            Btn.TextColor3 = Color3.new(1,1,1)
             Btn.Font = Enum.Font.Gotham
             Btn.TextSize = 14
             Btn.Parent = Page
 
             local BtnRound = Instance.new("UICorner")
-            BtnRound.CornerRadius = UDim.new(0, 6)
+            BtnRound.CornerRadius = UDim.new(0,6)
             BtnRound.Parent = Btn
 
             Btn.MouseButton1Click:Connect(function()
@@ -169,18 +178,18 @@ function library:Window(title)
         function tab:Toggle(text, default, callback)
             local Toggle = Instance.new("TextButton")
             Toggle.Size = UDim2.new(1, -10, 0, 30)
-            Toggle.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-            Toggle.TextColor3 = Color3.new(1, 1, 1)
+            Toggle.BackgroundColor3 = Color3.fromRGB(60,60,60)
+            Toggle.TextColor3 = Color3.new(1,1,1)
             Toggle.Font = Enum.Font.Gotham
             Toggle.TextSize = 14
             Toggle.Parent = Page
 
+            local ToggleRound = Instance.new("UICorner")
+            ToggleRound.CornerRadius = UDim.new(0,6)
+            ToggleRound.Parent = Toggle
+
             local state = default or false
             Toggle.Text = text .. " [" .. (state and "ON" or "OFF") .. "]"
-
-            local ToggleRound = Instance.new("UICorner")
-            ToggleRound.CornerRadius = UDim.new(0, 6)
-            ToggleRound.Parent = Toggle
 
             Toggle.MouseButton1Click:Connect(function()
                 state = not state
@@ -192,55 +201,59 @@ function library:Window(title)
         function tab:Slider(text, min, max, callback)
             local Frame = Instance.new("Frame")
             Frame.Size = UDim2.new(1, -10, 0, 35)
-            Frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Frame.BackgroundColor3 = Color3.fromRGB(50,50,50)
             Frame.Parent = Page
 
             local SliderCorner = Instance.new("UICorner")
-            SliderCorner.CornerRadius = UDim.new(0, 8)
+            SliderCorner.CornerRadius = UDim.new(0,8)
             SliderCorner.Parent = Frame
 
             local Label = Instance.new("TextLabel")
             Label.Size = UDim2.new(1, 0, 0, 15)
             Label.BackgroundTransparency = 1
             Label.Text = text .. ": " .. min
-            Label.TextColor3 = Color3.new(1, 1, 1)
+            Label.TextColor3 = Color3.new(1,1,1)
             Label.Font = Enum.Font.Gotham
             Label.TextSize = 13
             Label.Parent = Frame
 
             local Bar = Instance.new("Frame")
             Bar.Size = UDim2.new(1, -10, 0, 8)
-            Bar.Position = UDim2.new(0, 5, 0, 22)
-            Bar.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+            Bar.Position = UDim2.new(0,5,0,22)
+            Bar.BackgroundColor3 = Color3.fromRGB(70,70,70)
             Bar.Parent = Frame
 
             local BarCorner = Instance.new("UICorner")
-            BarCorner.CornerRadius = UDim.new(0, 6)
+            BarCorner.CornerRadius = UDim.new(0,6)
             BarCorner.Parent = Bar
 
             local Fill = Instance.new("Frame")
-            Fill.Size = UDim2.new(0, 0, 1, 0)
-            Fill.BackgroundColor3 = Color3.fromRGB(170, 170, 170)
+            Fill.Size = UDim2.new(0,0,1,0)
+            Fill.BackgroundColor3 = Color3.fromRGB(170,170,170)
             Fill.Parent = Bar
 
             local FillCorner = Instance.new("UICorner")
-            FillCorner.CornerRadius = UDim.new(0, 6)
+            FillCorner.CornerRadius = UDim.new(0,6)
             FillCorner.Parent = Fill
 
             local dragging = false
             local UIS = game:GetService("UserInputService")
 
             Bar.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = true
+                end
             end)
 
             UIS.InputEnded:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+                if i.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
             end)
 
             game:GetService("RunService").RenderStepped:Connect(function()
                 if dragging then
-                    local pos = math.clamp((UIS.GetMouseLocation().X - Bar.AbsolutePosition.X), 0, Bar.AbsoluteSize.X)
+                    local pos = math.clamp((UIS:GetMouseLocation().X - Bar.AbsolutePosition.X), 0, Bar.AbsoluteSize.X)
                     Fill.Size = UDim2.new(pos / Bar.AbsoluteSize.X, 0, 1, 0)
                     local value = math.floor(min + ((max - min) * (pos / Bar.AbsoluteSize.X)))
                     Label.Text = text .. ": " .. value
@@ -252,28 +265,29 @@ function library:Window(title)
         function tab:Dropdown(text, list, callback)
             local Drop = Instance.new("TextButton")
             Drop.Size = UDim2.new(1, -10, 0, 30)
-            Drop.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-            Drop.TextColor3 = Color3.new(1, 1, 1)
+            Drop.BackgroundColor3 = Color3.fromRGB(60,60,60)
+            Drop.Text = text
+            Drop.TextColor3 = Color3.new(1,1,1)
             Drop.Font = Enum.Font.Gotham
             Drop.TextSize = 14
-            Drop.Text = text
             Drop.Parent = Page
 
             local DropRound = Instance.new("UICorner")
-            DropRound.CornerRadius = UDim.new(0, 6)
+            DropRound.CornerRadius = UDim.new(0,6)
             DropRound.Parent = Drop
 
             local Open = false
 
             Drop.MouseButton1Click:Connect(function()
                 Open = not Open
+
                 if Open then
                     for _, v in ipairs(list) do
                         local Opt = Instance.new("TextButton")
                         Opt.Size = UDim2.new(1, -10, 0, 25)
                         Opt.Text = v
-                        Opt.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                        Opt.TextColor3 = Color3.new(1, 1, 1)
+                        Opt.BackgroundColor3 = Color3.fromRGB(60,60,60)
+                        Opt.TextColor3 = Color3.new(1,1,1)
                         Opt.Font = Enum.Font.Gotham
                         Opt.TextSize = 14
                         Opt.Parent = Page
@@ -285,9 +299,7 @@ function library:Window(title)
                     end
                 else
                     for _, c in ipairs(Page:GetChildren()) do
-                        if c:IsA("TextButton") and c ~= Drop then
-                            c:Destroy()
-                        end
+                        if c:IsA("TextButton") and c ~= Drop then c:Destroy() end
                     end
                 end
             end)
@@ -296,7 +308,6 @@ function library:Window(title)
         return tab
     end
 
-    -- NOTIFY WRAPPER
     function window:Notify(text)
         createNotification(text)
     end
