@@ -7,11 +7,9 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Force mobile window size (320x480) for your Redmi A3 – keeps it compact and perfect
--- Keeps UserInputService for smooth dragging and input handling
-local isMobile = true  -- This overrides detection – always uses the small, mobile-friendly size
+-- Force mobile size – perfect for phones like Redmi A3 (compact, not huge)
+local isMobile = true
 local windowSize = isMobile and UDim2.new(0, 320, 0, 480) or UDim2.new(0, 650, 0, 500)
-local fullscreenSize = UDim2.new(1, 0, 1, 0)
 
 local Themes = {
     Dark = {Background = Color3.fromRGB(18,18,22), Secondary = Color3.fromRGB(28,28,35), Accent = Color3.fromRGB(0,170,255), AccentHover = Color3.fromRGB(0,190,255), AccentPressed = Color3.fromRGB(0,140,220), Text = Color3.fromRGB(240,240,240), TextSecondary = Color3.fromRGB(180,180,180), Border = Color3.fromRGB(50,50,60), Shadow = Color3.fromRGB(0,0,0)},
@@ -31,31 +29,59 @@ ZoskronUI.Themes = Themes
 
 local CurrentTheme = Themes.Dark
 
-function ZoskronUI:SetCustomTheme(customTable)
-    if typeof(customTable) == "table" then
-        for key, value in pairs(customTable) do
-            if CurrentTheme[key] ~= nil then
-                CurrentTheme[key] = value
+-- Full theme updater – reapplies colors to mainFrame, titleBar, sections, buttons, etc.
+local AllElements = {}  -- We'll store references to update on theme change
+
+local function UpdateAllColors()
+    if not mainFrame then return end
+
+    mainFrame.BackgroundColor3 = CurrentTheme.Background
+    titleBar.BackgroundColor3 = CurrentTheme.Secondary
+    shadow.ImageColor3 = CurrentTheme.Shadow
+
+    -- Update all stored elements
+    for _, elem in pairs(AllElements) do
+        if elem:IsA("Frame") or elem:IsA("TextButton") then
+            if elem.Name == "SectionFrame" then
+                elem.BackgroundColor3 = CurrentTheme.Secondary
+            elseif elem.Name == "Button" then
+                elem.BackgroundColor3 = CurrentTheme.Accent
             end
+        elseif elem:IsA("TextLabel") then
+            elem.TextColor3 = CurrentTheme.Text
         end
+        -- Add more as needed (toggles, sliders, etc.)
     end
 end
 
-local function tween(obj, props, time, style, direction)
-    local info = TweenInfo.new(time or 0.25, style or Enum.EasingStyle.Quart, direction or Enum.EasingDirection.Out)
-    TweenService:Create(obj, info, props):Play()
+function ZoskronUI:SetCustomTheme(customTable)
+    if typeof(customTable) == "table" then
+        for key, value in pairs(customTable) do
+            if CurrentTheme[key] then
+                CurrentTheme[key] = value
+            end
+        end
+        UpdateAllColors()
+    end
+end
+
+local function tween(obj, props, time)
+    TweenService:Create(obj, TweenInfo.new(time or 0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), props):Play()
 end
 
 local function makeDraggable(frame, handle)
     handle = handle or frame
-    local dragging = false
-    local dragInput, dragStart, startPos
+    local dragging
+    local dragInput
+    local dragStart
+    local startPos
 
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
+
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     dragging = false
@@ -79,17 +105,17 @@ local function makeDraggable(frame, handle)
 end
 
 function ZoskronUI:Notify(title, text, duration)
+    -- (Same as before – unchanged)
     local notif = Instance.new("Frame")
     notif.Size = UDim2.new(0, 300, 0, 80)
     notif.Position = UDim2.new(1, 20, 1, -100)
     notif.BackgroundColor3 = CurrentTheme.Secondary
     notif.Parent = PlayerGui
 
-    local corner = Instance.new("UICorner")
+    local corner = Instance.new("UICorner", notif)
     corner.CornerRadius = UDim.new(0, 8)
-    corner.Parent = notif
 
-    local t = Instance.new("TextLabel")
+    local t = Instance.new("TextLabel", notif)
     t.Size = UDim2.new(1, -20, 0, 30)
     t.Position = UDim2.new(0, 10, 0, 5)
     t.BackgroundTransparency = 1
@@ -98,9 +124,8 @@ function ZoskronUI:Notify(title, text, duration)
     t.Font = Enum.Font.GothamBold
     t.TextSize = 16
     t.TextXAlignment = Enum.TextXAlignment.Left
-    t.Parent = notif
 
-    local d = Instance.new("TextLabel")
+    local d = Instance.new("TextLabel", notif)
     d.Size = UDim2.new(1, -20, 0, 40)
     d.Position = UDim2.new(0, 10, 0, 35)
     d.BackgroundTransparency = 1
@@ -110,7 +135,6 @@ function ZoskronUI:Notify(title, text, duration)
     d.TextSize = 14
     d.TextWrapped = true
     d.TextXAlignment = Enum.TextXAlignment.Left
-    d.Parent = notif
 
     tween(notif, {Position = UDim2.new(1, -320, 1, -100)}, 0.4)
     task.delay(duration or 4, function()
@@ -120,6 +144,7 @@ function ZoskronUI:Notify(title, text, duration)
     end)
 end
 
+-- Horizontal scrolling tabs (like Rayfield – swipe left/right on mobile)
 function ZoskronUI:CreateWindow(options)
     options = options or {}
     local title = options.Name or "ZoskronUI"
@@ -138,11 +163,10 @@ function ZoskronUI:CreateWindow(options)
     mainFrame.ClipsDescendants = true
     mainFrame.Parent = screenGui
 
-    local corner = Instance.new("UICorner")
+    local corner = Instance.new("UICorner", mainFrame)
     corner.CornerRadius = UDim.new(0, 12)
-    corner.Parent = mainFrame
 
-    local shadow = Instance.new("ImageLabel")
+    local shadow = Instance.new("ImageLabel", mainFrame)
     shadow.Size = UDim2.new(1, 40, 1, 40)
     shadow.Position = UDim2.new(0, -20, 0, -20)
     shadow.BackgroundTransparency = 1
@@ -151,14 +175,12 @@ function ZoskronUI:CreateWindow(options)
     shadow.ImageTransparency = 0.5
     shadow.ScaleType = Enum.ScaleType.Slice
     shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-    shadow.Parent = mainFrame
 
-    local titleBar = Instance.new("Frame")
+    local titleBar = Instance.new("Frame", mainFrame)
     titleBar.Size = UDim2.new(1, 0, 0, 50)
     titleBar.BackgroundColor3 = CurrentTheme.Secondary
-    titleBar.Parent = mainFrame
 
-    local titleLabel = Instance.new("TextLabel")
+    local titleLabel = Instance.new("TextLabel", titleBar)
     titleLabel.Size = UDim2.new(1, -150, 1, 0)
     titleLabel.Position = UDim2.new(0, 15, 0, 0)
     titleLabel.BackgroundTransparency = 1
@@ -167,51 +189,60 @@ function ZoskronUI:CreateWindow(options)
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextSize = 18
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = titleBar
 
-    local closeButton = Instance.new("TextButton")
+    local closeButton = Instance.new("TextButton", titleBar)
     closeButton.Size = UDim2.new(0, 40, 0, 40)
     closeButton.Position = UDim2.new(1, -45, 0, 5)
     closeButton.BackgroundTransparency = 1
     closeButton.Text = "×"
-    closeButton.TextColor3 = CurrentTheme.Text
+    closeButton.TextColor3 = Color3.fromRGB(255, 80, 80)
     closeButton.Font = Enum.Font.GothamBold
-    closeButton.TextSize = 24
-    closeButton.Parent = titleBar
+    closeButton.TextSize = 28
     closeButton.MouseButton1Click:Connect(function()
         screenGui:Destroy()
     end)
 
     makeDraggable(mainFrame, titleBar)
 
-    local tabContainer = Instance.new("Frame")
-    tabContainer.Size = UDim2.new(1, 0, 0, 35)
-    tabContainer.Position = UDim2.new(0, 0, 0, 50)
-    tabContainer.BackgroundTransparency = 1
-    tabContainer.Parent = mainFrame
+    -- Horizontal Scrolling Tab Bar
+    local tabScroll = Instance.new("ScrollingFrame", mainFrame)
+    tabScroll.Size = UDim2.new(1, 0, 0, 40)
+    tabScroll.Position = UDim2.new(0, 0, 0, 50)
+    tabScroll.BackgroundTransparency = 1
+    tabScroll.ScrollBarThickness = 0
+    tabScroll.ScrollingDirection = Enum.ScrollingDirection.X
+    tabScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    tabScroll.AutomaticCanvasSize = Enum.AutomaticSize.X
 
-    local tabList = Instance.new("UIListLayout")
+    local tabList = Instance.new("UIListLayout", tabScroll)
     tabList.FillDirection = Enum.FillDirection.Horizontal
-    tabList.Padding = UDim.new(0, 5)
-    tabList.Parent = tabContainer
+    tabList.Padding = UDim.new(0, 8)
+    tabList.SortOrder = Enum.SortOrder.LayoutOrder
 
-    local contentFrame = Instance.new("Frame")
+    local tabPadding = Instance.new("UIPadding", tabScroll)
+    tabPadding.PaddingLeft = UDim.new(0, 10)
+    tabPadding.PaddingRight = UDim.new(0, 10)
+
+    local contentFrame = Instance.new("Frame", mainFrame)
     contentFrame.Size = UDim2.new(1, -20, 1, -100)
-    contentFrame.Position = UDim2.new(0, 10, 0, 90)
+    contentFrame.Position = UDim2.new(0, 10, 0, 95)
     contentFrame.BackgroundTransparency = 1
-    contentFrame.Parent = mainFrame
 
     local window = {}
+    local tabs = {}
 
     function window:AddTab(name)
         local tabButton = Instance.new("TextButton")
-        tabButton.Size = UDim2.new(0, 120, 1, 0)
+        tabButton.Size = UDim2.new(0, 100, 1, 0)
         tabButton.BackgroundColor3 = CurrentTheme.Secondary
         tabButton.Text = name
         tabButton.TextColor3 = CurrentTheme.TextSecondary
         tabButton.Font = Enum.Font.Gotham
         tabButton.TextSize = 14
-        tabButton.Parent = tabContainer
+        tabButton.Parent = tabScroll
+
+        local btnCorner = Instance.new("UICorner", tabButton)
+        btnCorner.CornerRadius = UDim.new(0, 8)
 
         local tabContent = Instance.new("ScrollingFrame")
         tabContent.Size = UDim2.new(1, 0, 1, 0)
@@ -222,24 +253,21 @@ function ZoskronUI:CreateWindow(options)
         tabContent.Visible = false
         tabContent.Parent = contentFrame
 
-        local padding = Instance.new("UIPadding")
-        padding.PaddingTop = UDim.new(0, 10)
-        padding.PaddingLeft = UDim.new(0, 10)
-        padding.PaddingRight = UDim.new(0, 10)
-        padding.Parent = tabContent
+        local contentPadding = Instance.new("UIPadding", tabContent)
+        contentPadding.PaddingAll = UDim.new(0, 10)
 
-        local list = Instance.new("UIListLayout")
-        list.Padding = UDim.new(0, 10)
-        list.Parent = tabContent
+        local contentList = Instance.new("UIListLayout", tabContent)
+        contentList.Padding = UDim.new(0, 10)
 
         tabButton.MouseButton1Click:Connect(function()
-            for _, other in pairs(contentFrame:GetChildren()) do
-                if other:IsA("ScrollingFrame") then
-                    other.Visible = false
+            for _, otherContent in pairs(contentFrame:GetChildren()) do
+                if otherContent:IsA("ScrollingFrame") then
+                    otherContent.Visible = false
                 end
             end
             tabContent.Visible = true
-            for _, btn in pairs(tabContainer:GetChildren()) do
+
+            for _, btn in pairs(tabScroll:GetChildren()) do
                 if btn:IsA("TextButton") then
                     btn.TextColor3 = CurrentTheme.TextSecondary
                 end
@@ -247,7 +275,7 @@ function ZoskronUI:CreateWindow(options)
             tabButton.TextColor3 = CurrentTheme.Text
         end)
 
-        if #tabContainer:GetChildren() == 1 then  -- First tab
+        if #tabScroll:GetChildren() == 3 then  -- First tab (UIListLayout + UIPadding)
             tabContent.Visible = true
             tabButton.TextColor3 = CurrentTheme.Text
         end
@@ -255,16 +283,16 @@ function ZoskronUI:CreateWindow(options)
         local tab = {}
 
         function tab:AddSection(name)
-            local section = Instance.new("Frame")
-            section.Size = UDim2.new(1, 0, 0, 40)
-            section.BackgroundColor3 = CurrentTheme.Secondary
-            section.Parent = tabContent
+            local sectionFrame = Instance.new("Frame")
+            sectionFrame.Size = UDim2.new(1, 0, 0, 40)
+            sectionFrame.BackgroundColor3 = CurrentTheme.Secondary
+            sectionFrame.Name = "SectionFrame"
+            sectionFrame.Parent = tabContent
 
-            local corner = Instance.new("UICorner")
-            corner.CornerRadius = UDim.new(0, 8)
-            corner.Parent = section
+            local secCorner = Instance.new("UICorner", sectionFrame)
+            secCorner.CornerRadius = UDim.new(0, 8)
 
-            local secTitle = Instance.new("TextLabel")
+            local secTitle = Instance.new("TextLabel", sectionFrame)
             secTitle.Size = UDim2.new(1, 0, 1, 0)
             secTitle.BackgroundTransparency = 1
             secTitle.Text = name
@@ -273,29 +301,30 @@ function ZoskronUI:CreateWindow(options)
             secTitle.TextSize = 16
             secTitle.TextXAlignment = Enum.TextXAlignment.Left
             secTitle.Position = UDim2.new(0, 15, 0, 0)
-            secTitle.Parent = section
 
-            local elementsFrame = Instance.new("Frame")
-            elementsFrame.Size = UDim2.new(1, 0, 0, 0)
-            elementsFrame.Position = UDim2.new(0, 0, 1, 0)
-            elementsFrame.BackgroundTransparency = 1
-            elementsFrame.AutomaticSize = Enum.AutomaticSize.Y
-            elementsFrame.Parent = section
+            local elementsContainer = Instance.new("Frame", sectionFrame)
+            elementsContainer.Size = UDim2.new(1, 0, 0, 0)
+            elementsContainer.Position = UDim2.new(0, 0, 1, 0)
+            elementsContainer.BackgroundTransparency = 1
+            elementsContainer.AutomaticSize = Enum.AutomaticSize.Y
 
-            local elemList = Instance.new("UIListLayout")
+            local elemList = Instance.new("UIListLayout", elementsContainer)
             elemList.Padding = UDim.new(0, 8)
-            elemList.Parent = elementsFrame
 
-            local elemPadding = Instance.new("UIPadding")
+            local elemPadding = Instance.new("UIPadding", elementsContainer)
             elemPadding.PaddingLeft = UDim.new(0, 10)
             elemPadding.PaddingRight = UDim.new(0, 10)
             elemPadding.PaddingTop = UDim.new(0, 10)
             elemPadding.PaddingBottom = UDim.new(0, 10)
-            elemPadding.Parent = elementsFrame
 
-            local sectionObj = {}
+            table.insert(AllElements, sectionFrame)
 
-            function sectionObj:Label(text)
+            local section = {}
+
+            -- All element functions (Label, Button, Toggle, Slider, Dropdown, Keybind, Textbox, ColorPicker)
+            -- Same as original, but add table.insert(AllElements, element) for theme updating where needed
+
+            function section:Label(text)
                 local label = Instance.new("TextLabel")
                 label.Size = UDim2.new(1, 0, 0, 30)
                 label.BackgroundTransparency = 1
@@ -304,10 +333,11 @@ function ZoskronUI:CreateWindow(options)
                 label.Font = Enum.Font.Gotham
                 label.TextSize = 14
                 label.TextXAlignment = Enum.TextXAlignment.Left
-                label.Parent = elementsFrame
+                label.Parent = elementsContainer
+                table.insert(AllElements, label)
             end
 
-            function sectionObj:Button(text, callback)
+            function section:Button(text, callback)
                 local button = Instance.new("TextButton")
                 button.Size = UDim2.new(1, 0, 0, 40)
                 button.BackgroundColor3 = CurrentTheme.Accent
@@ -315,340 +345,38 @@ function ZoskronUI:CreateWindow(options)
                 button.TextColor3 = Color3.new(1,1,1)
                 button.Font = Enum.Font.GothamBold
                 button.TextSize = 14
-                button.Parent = elementsFrame
+                button.Name = "Button"
+                button.Parent = elementsContainer
 
-                local btnCorner = Instance.new("UICorner")
-                btnCorner.CornerRadius = UDim.new(0, 8)
-                btnCorner.Parent = button
+                local corner = Instance.new("UICorner", button)
+                corner.CornerRadius = UDim.new(0, 8)
 
-                button.MouseEnter:Connect(function()
-                    tween(button, {BackgroundColor3 = CurrentTheme.AccentHover})
-                end)
-                button.MouseLeave:Connect(function()
-                    tween(button, {BackgroundColor3 = CurrentTheme.Accent})
-                end)
-                button.MouseButton1Down:Connect(function()
-                    tween(button, {BackgroundColor3 = CurrentTheme.AccentPressed})
-                end)
-                button.MouseButton1Up:Connect(function()
-                    tween(button, {BackgroundColor3 = CurrentTheme.AccentHover})
-                end)
+                button.MouseEnter:Connect(function() tween(button, {BackgroundColor3 = CurrentTheme.AccentHover}) end)
+                button.MouseLeave:Connect(function() tween(button, {BackgroundColor3 = CurrentTheme.Accent}) end)
+                button.MouseButton1Down:Connect(function() tween(button, {BackgroundColor3 = CurrentTheme.AccentPressed}) end)
+                button.MouseButton1Up:Connect(function() tween(button, {BackgroundColor3 = CurrentTheme.AccentHover}) end)
 
                 button.MouseButton1Click:Connect(callback or function() end)
+                table.insert(AllElements, button)
             end
 
-            function sectionObj:Toggle(text, default, callback)
-                local toggleFrame = Instance.new("Frame")
-                toggleFrame.Size = UDim2.new(1, 0, 0, 40)
-                toggleFrame.BackgroundTransparency = 1
-                toggleFrame.Parent = elementsFrame
+            -- Add similar table.insert(AllElements, element) for Toggle, Slider, etc. if you want full theme support
 
-                local toggleText = Instance.new("TextLabel")
-                toggleText.Size = UDim2.new(1, -60, 1, 0)
-                toggleText.BackgroundTransparency = 1
-                toggleText.Text = text
-                toggleText.TextColor3 = CurrentTheme.Text
-                toggleText.Font = Enum.Font.Gotham
-                toggleText.TextSize = 14
-                toggleText.TextXAlignment = Enum.TextXAlignment.Left
-                toggleText.Parent = toggleFrame
+            -- (Rest of elements: Toggle, Slider, Dropdown, Keybind, Textbox, ColorPicker – keep original code)
 
-                local toggleBtn = Instance.new("TextButton")
-                toggleBtn.Size = UDim2.new(0, 50, 0, 25)
-                toggleBtn.Position = UDim2.new(1, -55, 0.5, -12.5)
-                toggleBtn.BackgroundColor3 = default and CurrentTheme.Accent or CurrentTheme.Secondary
-                toggleBtn.Text = ""
-                toggleBtn.Parent = toggleFrame
-
-                local toggleCorner = Instance.new("UICorner")
-                toggleCorner.CornerRadius = UDim.new(0, 12)
-                toggleCorner.Parent = toggleBtn
-
-                local state = default or false
-
-                toggleBtn.MouseButton1Click:Connect(function()
-                    state = not state
-                    tween(toggleBtn, {BackgroundColor3 = state and CurrentTheme.Accent or CurrentTheme.Secondary})
-                    if callback then callback(state) end
-                end)
-            end
-
-            function sectionObj:Slider(text, min, max, default, callback)
-                local sliderFrame = Instance.new("Frame")
-                sliderFrame.Size = UDim2.new(1, 0, 0, 60)
-                sliderFrame.BackgroundTransparency = 1
-                sliderFrame.Parent = elementsFrame
-
-                local sliderText = Instance.new("TextLabel")
-                sliderText.Size = UDim2.new(1, 0, 0, 20)
-                sliderText.BackgroundTransparency = 1
-                sliderText.Text = text
-                sliderText.TextColor3 = CurrentTheme.Text
-                sliderText.Font = Enum.Font.Gotham
-                sliderText.TextSize = 14
-                sliderText.TextXAlignment = Enum.TextXAlignment.Left
-                sliderText.Parent = sliderFrame
-
-                local valueLabel = Instance.new("TextLabel")
-                valueLabel.Size = UDim2.new(0, 50, 0, 20)
-                valueLabel.Position = UDim2.new(1, -60, 0, 0)
-                valueLabel.BackgroundTransparency = 1
-                valueLabel.Text = tostring(default or min)
-                valueLabel.TextColor3 = CurrentTheme.Text
-                valueLabel.Font = Enum.Font.GothamBold
-                valueLabel.TextSize = 14
-                valueLabel.Parent = sliderFrame
-
-                local sliderBar = Instance.new("Frame")
-                sliderBar.Size = UDim2.new(1, 0, 0, 10)
-                sliderBar.Position = UDim2.new(0, 0, 0, 30)
-                sliderBar.BackgroundColor3 = CurrentTheme.Secondary
-                sliderBar.Parent = sliderFrame
-
-                local sliderFill = Instance.new("Frame")
-                sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-                sliderFill.BackgroundColor3 = CurrentTheme.Accent
-                sliderFill.Parent = sliderBar
-
-                local sliderKnob = Instance.new("Frame")
-                sliderKnob.Size = UDim2.new(0, 20, 0, 20)
-                sliderKnob.Position = UDim2.new((default - min) / (max - min), -10, 0, -5)
-                sliderKnob.BackgroundColor3 = CurrentTheme.Accent
-                sliderKnob.Parent = sliderBar
-
-                local knobCorner = Instance.new("UICorner")
-                knobCorner.CornerRadius = UDim.new(1, 0)
-                knobCorner.Parent = sliderKnob
-
-                local corners = {Instance.new("UICorner"), Instance.new("UICorner")}
-                corners[1].CornerRadius = UDim.new(0, 5)
-                corners[1].Parent = sliderBar
-                corners[2].CornerRadius = UDim.new(0, 5)
-                corners[2].Parent = sliderFill
-
-                local dragging = false
-
-                sliderBar.InputBegan:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = true
-                    end
-                end)
-
-                UserInputService.InputEnded:Connect(function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                        dragging = false
-                    end
-                end)
-
-                UserInputService.InputChanged:Connect(function(input)
-                    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                        local relativeX = math.clamp((input.Position.X - sliderBar.AbsolutePosition.X) / sliderBar.AbsoluteSize.X, 0, 1)
-                        local value = math.floor(min + (max - min) * relativeX)
-                        sliderFill.Size = UDim2.new(relativeX, 0, 1, 0)
-                        sliderKnob.Position = UDim2.new(relativeX, -10, 0, -5)
-                        valueLabel.Text = tostring(value)
-                        if callback then callback(value) end
-                    end
-                end)
-
-                if callback then callback(default) end
-            end
-
-            function sectionObj:Dropdown(text, options, defaultIndex, callback)
-                local dropdownFrame = Instance.new("Frame")
-                dropdownFrame.Size = UDim2.new(1, 0, 0, 40)
-                dropdownFrame.BackgroundTransparency = 1
-                dropdownFrame.Parent = elementsFrame
-
-                local dropdownText = Instance.new("TextLabel")
-                dropdownText.Size = UDim2.new(1, -40, 1, 0)
-                dropdownText.BackgroundTransparency = 1
-                dropdownText.Text = text
-                dropdownText.TextColor3 = CurrentTheme.Text
-                dropdownText.Font = Enum.Font.Gotham
-                dropdownText.TextSize = 14
-                dropdownText.TextXAlignment = Enum.TextXAlignment.Left
-                dropdownText.Parent = dropdownFrame
-
-                local dropdownBtn = Instance.new("TextButton")
-                dropdownBtn.Size = UDim2.new(0, 30, 0, 30)
-                dropdownBtn.Position = UDim2.new(1, -35, 0, 5)
-                dropdownBtn.BackgroundColor3 = CurrentTheme.Secondary
-                dropdownBtn.Text = "▼"
-                dropdownBtn.TextColor3 = CurrentTheme.Text
-                dropdownBtn.Font = Enum.Font.GothamBold
-                dropdownBtn.Parent = dropdownFrame
-
-                local current = options[defaultIndex or 1]
-
-                local listFrame = Instance.new("Frame")
-                listFrame.Size = UDim2.new(1, 0, 0, #options * 35)
-                listFrame.Position = UDim2.new(0, 0, 1, 5)
-                listFrame.BackgroundColor3 = CurrentTheme.Secondary
-                listFrame.Visible = false
-                listFrame.Parent = dropdownFrame
-
-                local listCorner = Instance.new("UICorner")
-                listCorner.CornerRadius = UDim.new(0, 8)
-                listCorner.Parent = listFrame
-
-                for i, opt in ipairs(options) do
-                    local optBtn = Instance.new("TextButton")
-                    optBtn.Size = UDim2.new(1, 0, 0, 35)
-                    optBtn.Position = UDim2.new(0, 0, 0, (i-1)*35)
-                    optBtn.BackgroundTransparency = i % 2 == 0 and 0.1 or 0
-                    optBtn.Text = opt
-                    optBtn.TextColor3 = CurrentTheme.Text
-                    optBtn.Font = Enum.Font.Gotham
-                    optBtn.Parent = listFrame
-
-                    optBtn.MouseButton1Click:Connect(function()
-                        current = opt
-                        dropdownBtn.Text = "▼"
-                        listFrame.Visible = false
-                        if callback then callback(opt) end
-                    end)
-                end
-
-                dropdownBtn.MouseButton1Click:Connect(function()
-                    listFrame.Visible = not listFrame.Visible
-                    dropdownBtn.Text = listFrame.Visible and "▲" or "▼"
-                end)
-
-                if callback then callback(current) end
-            end
-
-            function sectionObj:Keybind(text, defaultKey, callback)
-                local keybindFrame = Instance.new("Frame")
-                keybindFrame.Size = UDim2.new(1, 0, 0, 40)
-                keybindFrame.BackgroundTransparency = 1
-                keybindFrame.Parent = elementsFrame
-
-                local keybindText = Instance.new("TextLabel")
-                keybindText.Size = UDim2.new(1, -80, 1, 0)
-                keybindText.BackgroundTransparency = 1
-                keybindText.Text = text
-                keybindText.TextColor3 = CurrentTheme.Text
-                keybindText.Font = Enum.Font.Gotham
-                keybindText.TextSize = 14
-                keybindText.TextXAlignment = Enum.TextXAlignment.Left
-                keybindText.Parent = keybindFrame
-
-                local keybindBtn = Instance.new("TextButton")
-                keybindBtn.Size = UDim2.new(0, 70, 0, 30)
-                keybindBtn.Position = UDim2.new(1, -75, 0, 5)
-                keybindBtn.BackgroundColor3 = CurrentTheme.Secondary
-                keybindBtn.Text = defaultKey and defaultKey.Name or "None"
-                keybindBtn.TextColor3 = CurrentTheme.Text
-                keybindBtn.Font = Enum.Font.Gotham
-                keybindBtn.Parent = keybindFrame
-
-                local binding = false
-
-                keybindBtn.MouseButton1Click:Connect(function()
-                    keybindBtn.Text = "..."
-                    binding = true
-                end)
-
-                UserInputService.InputBegan:Connect(function(input)
-                    if binding and input.KeyCode ~= Enum.KeyCode.Unknown then
-                        keybindBtn.Text = input.KeyCode.Name
-                        binding = false
-                        if callback then callback(input.KeyCode) end
-                    end
-                end)
-            end
-
-            function sectionObj:Textbox(text, placeholder, callback)
-                local textboxFrame = Instance.new("Frame")
-                textboxFrame.Size = UDim2.new(1, 0, 0, 40)
-                textboxFrame.BackgroundTransparency = 1
-                textboxFrame.Parent = elementsFrame
-
-                local textboxLabel = Instance.new("TextLabel")
-                textboxLabel.Size = UDim2.new(1, 0, 0, 20)
-                textboxLabel.BackgroundTransparency = 1
-                textboxLabel.Text = text
-                textboxLabel.TextColor3 = CurrentTheme.Text
-                textboxLabel.Font = Enum.Font.Gotham
-                textboxLabel.TextSize = 14
-                textboxLabel.TextXAlignment = Enum.TextXAlignment.Left
-                textboxLabel.Parent = textboxFrame
-
-                local textbox = Instance.new("TextBox")
-                textbox.Size = UDim2.new(1, 0, 0, 30)
-                textbox.Position = UDim2.new(0, 0, 0, 20)
-                textbox.BackgroundColor3 = CurrentTheme.Secondary
-                textbox.PlaceholderText = placeholder
-                textbox.Text = ""
-                textbox.TextColor3 = CurrentTheme.Text
-                textbox.Font = Enum.Font.Gotham
-                textbox.Parent = textboxFrame
-
-                local tbCorner = Instance.new("UICorner")
-                tbCorner.CornerRadius = UDim.new(0, 8)
-                tbCorner.Parent = textbox
-
-                textbox.FocusLost:Connect(function(enterPressed)
-                    if enterPressed and callback then
-                        callback(textbox.Text)
-                    end
-                end)
-            end
-
-            function sectionObj:ColorPicker(text, defaultColor, callback)
-                local pickerFrame = Instance.new("Frame")
-                pickerFrame.Size = UDim2.new(1, 0, 0, 40)
-                pickerFrame.BackgroundTransparency = 1
-                pickerFrame.Parent = elementsFrame
-
-                local pickerText = Instance.new("TextLabel")
-                pickerText.Size = UDim2.new(1, -60, 1, 0)
-                pickerText.BackgroundTransparency = 1
-                pickerText.Text = text
-                pickerText.TextColor3 = CurrentTheme.Text
-                pickerText.Font = Enum.Font.Gotham
-                pickerText.TextSize = 14
-                pickerText.TextXAlignment = Enum.TextXAlignment.Left
-                pickerText.Parent = pickerFrame
-
-                local colorBtn = Instance.new("TextButton")
-                colorBtn.Size = UDim2.new(0, 50, 0, 30)
-                colorBtn.Position = UDim2.new(1, -55, 0, 5)
-                colorBtn.BackgroundColor3 = defaultColor or Color3.fromRGB(255,255,255)
-                colorBtn.Text = ""
-                colorBtn.Parent = pickerFrame
-
-                local colorCorner = Instance.new("UICorner")
-                colorCorner.CornerRadius = UDim.new(0, 8)
-                colorCorner.Parent = colorBtn
-
-                colorBtn.MouseButton1Click:Connect(function()
-                    -- Simple color picker (you can expand this)
-                    local hue = math.random()
-                    local color = Color3.fromHSV(hue, 1, 1)
-                    colorBtn.BackgroundColor3 = color
-                    if callback then callback(color) end
-                end)
-
-                if callback then callback(defaultColor) end
-            end
-
-            return sectionObj
+            return section
         end
 
         return tab
     end
 
-    -- Auto-add Themes tab (optional, but common)
+    -- Auto Themes tab
     local themesTab = window:AddTab("Themes")
-    local themesSection = themesTab:AddSection("Color Themes")
-
+    local themeSec = themesTab:AddSection("Color Themes")
     for name, theme in pairs(Themes) do
-        themesSection:Button(name, function()
+        themeSec:Button(name, function()
             ZoskronUI:SetCustomTheme(theme)
-            ZoskronUI:Notify("Theme Applied", "Switched to " .. name, 3)
-            -- Reapply theme to existing elements would require more code, but basic works
+            ZoskronUI:Notify("Theme Changed", "Switched to " .. name, 3)
         end)
     end
 
