@@ -152,14 +152,3 @@ function Aether:CreateWindow(cfg)
 
     return Win
 end
-
-local UI = Aether:CreateWindow({Name = "Aether Mobile", Theme = "Cyber"})
-UI:Label("Welcome to Aether")
-UI:Button("Destroy UI", function() end)
-UI:Toggle("Infinite Jump", function(s) end)
-UI:Slider("WalkSpeed", 16, 200, function(v) end)
-UI:Dropdown("Location", {"Spawn", "City", "Shop"}, function(v) end)
-UI:TextBox("Message", "Type here...", function(t) end)
-UI:Paragraph("Credits", "Developed for ScriptBlox 2026")
-UI:ColorPicker("UI Accent", function(c) end)
-UI:CopyLabel("discord.gg/aether")
