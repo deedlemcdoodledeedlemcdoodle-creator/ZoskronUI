@@ -1,208 +1,165 @@
---[[ Final Polished Roblox UI Library Clean, Dark, Modern, No Rayfield, No VortexUI Supports: • Button • Toggle • Dropdown • TextBox • Paragraph • Slider • Label • Section • Keybind • Tabs • Notifications • Color Picker (simple)
+local UIS = game:GetService("UserInputService")
+local TS = game:GetService("TweenService")
+local RS = game:GetService("RunService")
+local CoreGui = game:GetService("CoreGui")
 
-Load Example:
-local Library = loadstring(game:HttpGet("RAW_GITHUB_LINK"))()
-local Win = Library:CreateWindow("My Hub")
+local Aether = {
+    Themes = {
+        Dark = {Main = Color3.fromRGB(20, 20, 22), Accent = Color3.fromRGB(115, 90, 255), Text = Color3.fromRGB(240, 240, 245), Secondary = Color3.fromRGB(35, 35, 40)},
+        Light = {Main = Color3.fromRGB(240, 240, 245), Accent = Color3.fromRGB(80, 50, 230), Text = Color3.fromRGB(25, 25, 30), Secondary = Color3.fromRGB(210, 210, 215)},
+        Midnight = {Main = Color3.fromRGB(10, 10, 12), Accent = Color3.fromRGB(255, 255, 255), Text = Color3.fromRGB(220, 220, 225), Secondary = Color3.fromRGB(25, 25, 30)},
+        Ocean = {Main = Color3.fromRGB(10, 20, 30), Accent = Color3.fromRGB(0, 180, 255), Text = Color3.fromRGB(230, 245, 255), Secondary = Color3.fromRGB(20, 35, 55)},
+        Rose = {Main = Color3.fromRGB(25, 15, 20), Accent = Color3.fromRGB(255, 120, 150), Text = Color3.fromRGB(255, 240, 245), Secondary = Color3.fromRGB(45, 30, 35)},
+        Emerald = {Main = Color3.fromRGB(12, 22, 15), Accent = Color3.fromRGB(40, 220, 120), Text = Color3.fromRGB(230, 250, 235), Secondary = Color3.fromRGB(25, 40, 30)},
+        Amber = {Main = Color3.fromRGB(20, 18, 12), Accent = Color3.fromRGB(255, 180, 50), Text = Color3.fromRGB(250, 245, 230), Secondary = Color3.fromRGB(40, 35, 25)},
+        Amethyst = {Main = Color3.fromRGB(18, 12, 25), Accent = Color3.fromRGB(180, 100, 255), Text = Color3.fromRGB(245, 230, 255), Secondary = Color3.fromRGB(35, 25, 45)},
+        Crimson = {Main = Color3.fromRGB(20, 10, 10), Accent = Color3.fromRGB(255, 60, 60), Text = Color3.fromRGB(255, 230, 230), Secondary = Color3.fromRGB(40, 20, 20)},
+        Cyber = {Main = Color3.fromRGB(5, 5, 10), Accent = Color3.fromRGB(0, 255, 150), Text = Color3.fromRGB(200, 255, 230), Secondary = Color3.fromRGB(20, 20, 40)},
+        Frost = {Main = Color3.fromRGB(230, 240, 250), Accent = Color3.fromRGB(100, 180, 255), Text = Color3.fromRGB(40, 60, 80), Secondary = Color3.fromRGB(200, 215, 230)},
+        Vivid = {Main = Color3.fromRGB(30, 30, 30), Accent = Color3.fromRGB(255, 0, 110), Text = Color3.fromRGB(255, 255, 255), Secondary = Color3.fromRGB(50, 50, 50)}
+    }
+}
 
-]]
+function Aether:CreateWindow(cfg)
+    local Win = {Theme = self.Themes[cfg.Theme or "Dark"], Full = false, Min = false}
+    local SG = Instance.new("ScreenGui", (RS:IsStudio() and game.Players.LocalPlayer.PlayerGui or CoreGui))
+    local M = Instance.new("Frame", SG)
+    M.Size, M.Position, M.BackgroundColor3, M.ClipsDescendants = UDim2.new(0, 420, 0, 280), UDim2.new(0.5, -210, 0.5, -140), Win.Theme.Main, true
+    Instance.new("UICorner", M).CornerRadius = UDim.new(0, 10)
+    Instance.new("UIStroke", M).Color = Win.Theme.Secondary
 
--- SERVICES local Players = game:GetService("Players") local UIS = game:GetService("UserInputService") local TweenService = game:GetService("TweenService") local RunService = game:GetService("RunService")
+    local T = Instance.new("Frame", M)
+    T.Size, T.BackgroundTransparency = UDim2.new(1, 0, 0, 35), 1
+    local TL = Instance.new("TextLabel", T)
+    TL.Text, TL.Size, TL.Position, TL.TextColor3, TL.Font, TL.TextSize, TL.TextXAlignment, TL.BackgroundTransparency = cfg.Name, UDim2.new(1, -110, 1, 0), UDim2.new(0, 12, 0, 0), Win.Theme.Text, "GothamBold", 14, "Left", 1
 
-local Library = {} Library.__index = Library
+    local C = Instance.new("ScrollingFrame", M)
+    C.Size, C.Position, C.BackgroundTransparency, C.ScrollBarThickness = UDim2.new(1, -10, 1, -45), UDim2.new(0, 5, 0, 40), 1, 0
+    local L = Instance.new("UIListLayout", C)
+    L.Padding, L.HorizontalAlignment = UDim.new(0, 5), "Center"
 
--- WINDOW CREATION function Library:CreateWindow(title) local ScreenGui = Instance.new("ScreenGui") ScreenGui.Parent = Players.LocalPlayer:WaitForChild("PlayerGui")
-
-local Main = Instance.new("Frame")
-Main.Size = UDim2.new(0, 480, 0, 340)
-Main.Position = UDim2.new(0.5, -240, 0.5, -170)
-Main.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(20,20,20)
-local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-Main.Parent = ScreenGui
-
-local layout = Instance.new("UIListLayout", Main)
-layout.Padding = UDim.new(0,6)
-
--- DRAGGING
-local dragging, dragStart, startPos
-Main.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = Main.Position
+    local function HeadBtn(txt, x, cb)
+        local b = Instance.new("TextButton", T)
+        b.Size, b.Position, b.Text, b.BackgroundColor3, b.TextColor3, b.Font = UDim2.new(0, 25, 0, 25), UDim2.new(1, x, 0.5, -12), txt, Win.Theme.Secondary, Win.Theme.Text, "GothamBold"
+        Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
+        b.Activated:Connect(cb)
     end
-end)
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-UIS.InputChanged:Connect(function(input)
-    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
-local Window = {}
-setmetatable(Window, Library)
-Window.Main = Main
-Window.Tabs = {}
-return Window
-
-end
-
--- BUTTON function Library:CreateButton(text, callback) local Btn = Instance.new("TextButton") Btn.Size = UDim2.new(1, -10, 0, 32) Btn.Text = text Btn.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(40,40,40) local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst Btn.TextColor3 = Color3.new(1,1,1) Btn.Parent = self.Main
-
-Btn.MouseButton1Click:Connect(function()
-    if callback then callback() end
-end)
-
-end
-
--- TOGGLE function Library:CreateToggle(text, default, callback) local Frame = Instance.new("Frame", self.Main) Frame.Size = UDim2.new(1, -10, 0, 32) Frame.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(40,40,40) local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-
-local Label = Instance.new("TextLabel", Frame)
-Label.Size = UDim2.new(0.7,0,1,0)
-Label.BackgroundTransparency = 1
-Label.Text = text
-Label.TextColor3 = Color3.new(1,1,1)
-
-local Btn = Instance.new("TextButton", Frame)
-Btn.Size = UDim2.new(0.3,-4,0.8,0)
-Btn.Position = UDim2.new(0.7,2,0.1,0)
-Btn.Text = default and "ON" or "OFF"
-Btn.BackgroundColor3 = BackgroundColor3 = default and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
-local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-Btn.TextColor3 = Color3.new(1,1,1)
-
-local state = default
-Btn.MouseButton1Click:Connect(function()
-    state = not state
-    Btn.Text = state and "ON" or "OFF"
-    Btn.BackgroundColor3 = BackgroundColor3 = state and Color3.fromRGB(0,170,0) or Color3.fromRGB(170,0,0)
-local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-    if callback then callback(state) end
-end)
-
-end
-
--- TEXTBOX function Library:CreateTextBox(placeholder, callback) local Box = Instance.new("TextBox", self.Main) Box.Size = UDim2.new(1, -10, 0, 32) Box.PlaceholderText = placeholder Box.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(40,40,40) local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst Box.TextColor3 = Color3.new(1,1,1)
-
-Box.FocusLost:Connect(function()
-    if callback then callback(Box.Text) end
-end)
-
-end
-
--- DROPDOWN function Library:CreateDropdown(text, list, callback) local Drop = Instance.new("Frame", self.Main) Drop.Size = UDim2.new(1,-10,0,32) Drop.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(40,40,40) local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-
-local Label = Instance.new("TextButton", Drop)
-Label.Size = UDim2.new(1,0,1,0)
-Label.BackgroundTransparency = 1
-Label.Text = text .. " ▼"
-Label.TextColor3 = Color3.new(1,1,1)
-
-local open = false
-Label.MouseButton1Click:Connect(function()
-    open = not open
-    for _,b in pairs(Drop:GetChildren()) do
-        if b:IsA("TextButton") and b ~= Label then b.Visible = open end
-    end
-end)
-
-for i, option in ipairs(list) do
-    local Opt = Instance.new("TextButton", Drop)
-    Opt.Size = UDim2.new(1,0,0,26)
-    Opt.Position = UDim2.new(0,0,0,32+(i-1)*26)
-    Opt.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(30,30,30)
-local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-    Opt.TextColor3 = Color3.new(1,1,1)
-    Opt.Text = option
-    Opt.Visible = false
-
-    Opt.MouseButton1Click:Connect(function()
-        Label.Text = text .. ": " .. option
-        open = false
-        for _,b in pairs(Drop:GetChildren()) do
-            if b:IsA("TextButton") and b ~= Label then b.Visible = false end
-        end
-        if callback then callback(option) end
+    HeadBtn("X", -35, function() SG:Destroy() end)
+    HeadBtn("▢", -65, function() 
+        Win.Full = not Win.Full
+        TS:Create(M, TweenInfo.new(0.3), {Size = Win.Full and UDim2.new(1, 0, 1, 0) or UDim2.new(0, 420, 0, 280), Position = Win.Full and UDim2.new(0, 0, 0, 0) or UDim2.new(0.5, -210, 0.5, -140)}):Play()
     end)
-end
+    HeadBtn("-", -95, function()
+        Win.Min = not Win.Min
+        TS:Create(M, TweenInfo.new(0.3), {Size = Win.Min and UDim2.new(0, 420, 0, 35) or UDim2.new(0, 420, 0, 280)}):Play()
+    end)
 
-end
-
--- PARAGRAPH function Library:CreateParagraph(title, content) local P = Instance.new("TextLabel", self.Main) P.Size = UDim2.new(1,-10,0,70) P.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(40,40,40) local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst P.TextColor3 = Color3.new(1,1,1) P.TextWrapped = true P.Text = title .. " " .. content end
-
--- SLIDER function Library:CreateSlider(text, min, max, default, callback) local Frame = Instance.new("Frame", self.Main) Frame.Size = UDim2.new(1, -10, 0, 40) Frame.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(40,40,40) local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-
-local Label = Instance.new("TextLabel", Frame)
-Label.Size = UDim2.new(1,0,0,18)
-Label.BackgroundTransparency = 1
-Label.TextColor3 = Color3.new(1,1,1)
-Label.Text = text .. ": " .. default
-
-local Slider = Instance.new("Frame", Frame)
-Slider.Size = UDim2.new(1,-10,0,10)
-Slider.Position = UDim2.new(0,5,0,22)
-Slider.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(60,60,60)
-local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-
-local Fill = Instance.new("Frame", Slider)
-Fill.Size = UDim2.new((default-min)/(max-min),0,1,0)
-Fill.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(0,170,255)
-local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst
-
-local dragging = false
-Slider.InputBegan:Connect(function(i)
-    if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true end
-end)
-UIS.InputEnded:Connect(function(i)
-    if i.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end
-end)
-UIS.InputChanged:Connect(function(i)
-    if dragging and i.UserInputType==Enum.UserInputType.MouseMovement then
-        local rel = math.clamp((i.Position.X - Slider.AbsolutePosition.X)/Slider.AbsoluteSize.X,0,1)
-        Fill.Size = UDim2.new(rel,0,1,0)
-        local val = math.floor(min + (max-min)*rel)
-        Label.Text = text .. ": " .. val
-        if callback then callback(val) end
+    function Win:Button(n, cb)
+        local b = Instance.new("TextButton", C)
+        b.Size, b.BackgroundColor3, b.Text, b.TextColor3, b.Font = UDim2.new(0.95, 0, 0, 35), Win.Theme.Secondary, n, Win.Theme.Text, "Gotham"
+        Instance.new("UICorner", b)
+        b.Activated:Connect(cb)
     end
-end)
 
-end
-
--- LABEL function Library:CreateLabel(text) local L = Instance.new("TextLabel", self.Main) L.Size = UDim2.new(1, -10, 0, 24) L.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(40,40,40) local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst L.TextColor3 = Color3.new(1,1,1) L.Text = text end
-
--- SECTION function Library:CreateSection(title) local S = Instance.new("TextLabel", self.Main) S.Size = UDim2.new(1,-10,0,26) S.BackgroundColor3 = BackgroundColor3 = Color3.fromRGB(30,30,30) local _corner = Instance.new("UICorner"); _corner.CornerRadius = UDim.new(0,8); _corner.Parent = inst S.TextColor3 = Color3.fromRGB(0,170,255) S.Text = "[ " .. title .. " ]" end
-
--- KEYBIND function Library:CreateKeybind(text, defaultKey, callback) local Frame = Instance.new("Frame", self.Main) Frame.Size = UDim2.new(1, -10, 0, 32) Frame.BackgroundColor3 = Color3.fromRGB(40,40,40)
-
-local Label = Instance.new("TextLabel", Frame)
-Label.Size = UDim2.new(0.6, 0, 1, 0)
-Label.BackgroundTransparency = 1
-Label.Text = text
-Label.TextColor3 = Color3.new(1,1,1)
-
-local Btn = Instance.new("TextButton", Frame)
-Btn.Size = UDim2.new(0.4, -4, 0.8, 0)
-Btn.Position = UDim2.new(0.6, 2, 0.1, 0)
-Btn.Text = tostring(defaultKey.Name)
-Btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-Btn.TextColor3 = Color3.new(1,1,1)
-
-local waiting = false
-Btn.MouseButton1Click:Connect(function()
-    Btn.Text = "..."
-    waiting = true
-end)
-
-UIS.InputBegan:Connect(function(input)
-    if waiting and input.UserInputType == Enum.UserInputType.Keyboard then
-        waiting = false
-        Btn.Text = input.KeyCode.Name
-        if callback then callback(input.KeyCode) end
+    function Win:Toggle(n, cb)
+        local s = false
+        local b = Instance.new("TextButton", C)
+        b.Size, b.BackgroundColor3, b.Text, b.TextColor3, b.Font = UDim2.new(0.95, 0, 0, 35), Win.Theme.Secondary, n.." : OFF", Win.Theme.Text, "Gotham"
+        Instance.new("UICorner", b)
+        b.Activated:Connect(function()
+            s = not s
+            b.Text, b.TextColor3 = n..(s and " : ON" or " : OFF"), s and Win.Theme.Accent or Win.Theme.Text
+            cb(s)
+        end)
     end
-end)
 
+    function Win:Slider(n, min, max, cb)
+        local f = Instance.new("Frame", C)
+        f.Size, f.BackgroundColor3 = UDim2.new(0.95, 0, 0, 45), Win.Theme.Secondary
+        Instance.new("UICorner", f)
+        local l = Instance.new("TextLabel", f)
+        l.Text, l.Size, l.Position, l.TextColor3, l.BackgroundTransparency = n.." : "..min, UDim2.new(1, -20, 0, 20), UDim2.new(0, 10, 0, 5), Win.Theme.Text, 1
+        local bg = Instance.new("Frame", f)
+        bg.Size, bg.Position, bg.BackgroundColor3 = UDim2.new(1, -20, 0, 4), UDim2.new(0, 10, 0, 30), Win.Theme.Main
+        local fill = Instance.new("Frame", bg)
+        fill.Size, fill.BackgroundColor3 = UDim2.new(0, 0, 1, 0), Win.Theme.Accent
+        local function upd(i)
+            local p = math.clamp((i.Position.X - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
+            local v = math.floor(min + (max - min) * p)
+            fill.Size, l.Text = UDim2.new(p, 0, 1, 0), n.." : "..v
+            cb(v)
+        end
+        bg.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then upd(i) local m = UIS.InputChanged:Connect(function(i2) if i2.UserInputType == Enum.UserInputType.MouseMovement or i2.UserInputType == Enum.UserInputType.Touch then upd(i2) end end) UIS.InputEnded:Connect(function(i3) if i3.UserInputType == Enum.UserInputType.MouseButton1 or i3.UserInputType == Enum.UserInputType.Touch then m:Disconnect() end end) end end)
+    end
+
+    function Win:TextBox(n, p, cb)
+        local f = Instance.new("Frame", C)
+        f.Size, f.BackgroundColor3 = UDim2.new(0.95, 0, 0, 50), Win.Theme.Secondary
+        Instance.new("UICorner", f)
+        local i = Instance.new("TextBox", f)
+        i.Size, i.Position, i.PlaceholderText, i.Text, i.BackgroundColor3, i.TextColor3 = UDim2.new(1, -20, 0, 25), UDim2.new(0, 10, 0, 20), p, "", Win.Theme.Main, Win.Theme.Text
+        Instance.new("UICorner", i)
+        i.FocusLost:Connect(function(e) if e then cb(i.Text) end end)
+    end
+
+    function Win:Dropdown(n, l, cb)
+        local b = Instance.new("TextButton", C)
+        b.Size, b.BackgroundColor3, b.Text, b.TextColor3 = UDim2.new(0.95, 0, 0, 35), Win.Theme.Secondary, n.." ▼", Win.Theme.Text
+        Instance.new("UICorner", b)
+        local d = Instance.new("Frame", C)
+        d.Size, d.Visible, d.BackgroundColor3 = UDim2.new(0.95, 0, 0, 0), false, Win.Theme.Secondary
+        local dl = Instance.new("UIListLayout", d)
+        b.Activated:Connect(function() d.Visible = not d.Visible d.Size = d.Visible and UDim2.new(0.95, 0, 0, dl.AbsoluteContentSize.Y) or UDim2.new(0.95, 0, 0, 0) end)
+        for _,v in pairs(l) do
+            local o = Instance.new("TextButton", d)
+            o.Size, o.Text, o.BackgroundColor3, o.TextColor3, o.BorderSizePixel = UDim2.new(1, 0, 0, 25), v, Win.Theme.Secondary, Win.Theme.Text, 0
+            o.Activated:Connect(function() b.Text, d.Visible, d.Size = n.." : "..v, false, UDim2.new(0.95, 0, 0, 0) cb(v) end)
+        end
+    end
+
+    function Win:ColorPicker(n, cb)
+        local b = Instance.new("TextButton", C)
+        b.Size, b.BackgroundColor3, b.Text, b.TextColor3 = UDim2.new(0.95, 0, 0, 35), Win.Theme.Secondary, n, Win.Theme.Text
+        Instance.new("UICorner", b)
+        local p = Instance.new("Frame", b)
+        p.Size, p.Position, p.BackgroundColor3 = UDim2.new(0, 20, 0, 20), UDim2.new(1, -30, 0.5, -10), Win.Theme.Accent
+        Instance.new("UICorner", p)
+        local clrs = {Color3.new(1,0,0), Color3.new(0,1,0), Color3.new(0,0,1), Color3.new(1,1,0), Color3.new(1,0,1), Color3.new(1,1,1)}
+        local cur = 1 b.Activated:Connect(function() cur = cur < #clrs and cur + 1 or 1 p.BackgroundColor3 = clrs[cur] cb(clrs[cur]) end)
+    end
+
+    function Win:Paragraph(t, c_txt)
+        local f = Instance.new("Frame", C)
+        f.Size, f.BackgroundColor3 = UDim2.new(0.95, 0, 0, 60), Win.Theme.Secondary
+        Instance.new("UICorner", f)
+        local tl = Instance.new("TextLabel", f)
+        tl.Text, tl.Size, tl.Position, tl.TextColor3, tl.Font, tl.BackgroundTransparency = t, UDim2.new(1, -10, 0, 20), UDim2.new(0, 10, 0, 5), Win.Theme.Accent, "GothamBold", 1
+        local cl = Instance.new("TextLabel", f)
+        cl.Text, cl.Size, cl.Position, cl.TextColor3, cl.TextWrapped, cl.BackgroundTransparency = c_txt, UDim2.new(1, -20, 0, 30), UDim2.new(0, 10, 0, 25), Win.Theme.Text, true, 1
+    end
+
+    function Win:CopyLabel(t)
+        local b = Instance.new("TextButton", C)
+        b.Size, b.BackgroundColor3, b.Text, b.TextColor3 = UDim2.new(0.95, 0, 0, 30), Win.Theme.Secondary, "Copy: "..t, Win.Theme.Text
+        Instance.new("UICorner", b)
+        b.Activated:Connect(function() setclipboard(t) b.Text = "Copied!" task.wait(1) b.Text = "Copy: "..t end)
+    end
+
+    function Win:Label(t)
+        local l = Instance.new("TextLabel", C)
+        l.Size, l.Text, l.TextColor3, l.BackgroundTransparency, l.Font = UDim2.new(0.95, 0, 0, 20), t, Win.Theme.Text, 1, "Gotham"
+    end
+
+    return Win
 end
+
+local UI = Aether:CreateWindow({Name = "Aether Mobile", Theme = "Cyber"})
+UI:Label("Welcome to Aether")
+UI:Button("Destroy UI", function() end)
+UI:Toggle("Infinite Jump", function(s) end)
+UI:Slider("WalkSpeed", 16, 200, function(v) end)
+UI:Dropdown("Location", {"Spawn", "City", "Shop"}, function(v) end)
+UI:TextBox("Message", "Type here...", function(t) end)
+UI:Paragraph("Credits", "Developed for ScriptBlox 2026")
+UI:ColorPicker("UI Accent", function(c) end)
+UI:CopyLabel("discord.gg/aether")
