@@ -1,159 +1,213 @@
 local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+local player = Players.LocalPlayer
 
-local UI = {}
-local Sections = {}
-local CurrentSection = nil
+-- Update profile picture
+local headshotUrl = "https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds="..player.UserId.."&size=150x150&format=Png&isCircular=true"
+LMG2L["Player's Profile Picture_20"].Image = headshotUrl
 
-local Themes = {
-	Dark = {Main=Color3.fromRGB(24,24,24),Container=Color3.fromRGB(35,35,35),Element=Color3.fromRGB(132,132,132),Tab=Color3.fromRGB(66,66,66),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(0,170,255)},
-	Ocean = {Main=Color3.fromRGB(18,33,43),Container=Color3.fromRGB(24,52,70),Element=Color3.fromRGB(40,90,120),Tab=Color3.fromRGB(30,70,90),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(0,255,200)},
-	Blood = {Main=Color3.fromRGB(30,0,0),Container=Color3.fromRGB(45,5,5),Element=Color3.fromRGB(120,20,20),Tab=Color3.fromRGB(80,10,10),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(255,0,0)},
-	Nature = {Main=Color3.fromRGB(20,35,20),Container=Color3.fromRGB(30,50,30),Element=Color3.fromRGB(60,100,60),Tab=Color3.fromRGB(45,80,45),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(150,255,150)},
-	Midnight = {Main=Color3.fromRGB(10,10,20),Container=Color3.fromRGB(15,15,30),Element=Color3.fromRGB(45,45,85),Tab=Color3.fromRGB(30,30,60),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(140,100,255)}
-}
+local UISuite = {}
+UISuite.Tabs = {}
+UISuite.Elements = {}
 
-local CurrentTheme = Themes.Dark
+-- Function to create a new tab
+function UISuite:CreateTab(name)
+    local tabButton = Instance.new("TextButton", LMG2L["ScrollingFrame_6"])
+    tabButton.Text = name
+    tabButton.Size = UDim2.new(0, 116, 0, 44)
+    tabButton.BackgroundColor3 = Color3.fromRGB(66, 66, 66)
+    tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabButton.FontFace = Font.new([[rbxasset://fonts/families/Arial.json]])
+    Instance.new("UICorner", tabButton)
 
-local function StyleElement(obj)
-	obj.Size = UDim2.new(0, 260, 0, 40)
-	obj.BackgroundColor3 = CurrentTheme.Element
-	obj.TextColor3 = CurrentTheme.Text
-	obj.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold)
-	obj.TextSize = 16
-	Instance.new("UICorner", obj).CornerRadius = UDim.new(0, 6)
-	local s = Instance.new("UIStroke", obj)
-	s.Thickness = 1.5
-	s.Transparency = 0.6
+    local tabContainer = Instance.new("Frame", LMG2L["Scrolling for Container_11"])
+    tabContainer.Size = UDim2.new(1, 0, 1, 0)
+    tabContainer.BackgroundTransparency = 1
+    tabContainer.Visible = false
+
+    local tabScroll = Instance.new("ScrollingFrame", tabContainer)
+    tabScroll.Size = UDim2.new(1, 0, 1, 0)
+    tabScroll.BackgroundTransparency = 1
+    tabScroll.BorderSizePixel = 0
+    tabScroll.CanvasSize = UDim2.new(0,0,0,0)
+    tabScroll.ScrollBarThickness = 6
+    local layout = Instance.new("UIListLayout", tabScroll)
+    layout.Padding = UDim.new(0, 6)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    tabButton.Activated:Connect(function()
+        for _, child in pairs(LMG2L["Scrolling for Container_11"]:GetChildren()) do
+            if child:IsA("Frame") then
+                child.Visible = false
+            end
+        end
+        tabContainer.Visible = true
+    end)
+
+    UISuite.Tabs[name] = {Button = tabButton, Container = tabContainer, Scroll = tabScroll, Layout = layout}
+    return tabButton
 end
 
-function UI:UpdateTheme()
-	if not UI._Main then return end
-	UI._Main.BackgroundColor3 = CurrentTheme.Main
-	UI._Container.BackgroundColor3 = CurrentTheme.Container
-	for _, tab in ipairs(UI._Tabs:GetChildren()) do
-		if tab:IsA("TextButton") then tab.BackgroundColor3 = CurrentTheme.Tab end
-	end
+-- Function to create elements inside a tab
+local function AddElement(tabName, element)
+    local tab = UISuite.Tabs[tabName]
+    if not tab then return end
+    element.Parent = tab.Scroll
+    tab.Scroll.CanvasSize = UDim2.new(0,0,0,tab.Layout.AbsoluteContentSize.Y)
+    table.insert(UISuite.Elements, element)
 end
 
-function UI:Launch()
-	local ScreenGui = Instance.new("ScreenGui", PlayerGui)
-	ScreenGui.ResetOnSpawn = false
-	
-	local Main = Instance.new("Frame", ScreenGui)
-	Main.Size = UDim2.new(0, 450, 0, 300)
-	Main.Position = UDim2.new(0.5, -225, 0.5, -150)
-	Main.BackgroundColor3 = CurrentTheme.Main
-	Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
-
-	local Tabs = Instance.new("ScrollingFrame", Main)
-	Tabs.Size = UDim2.new(0, 130, 1, -20)
-	Tabs.Position = UDim2.new(0, 10, 0, 10)
-	Tabs.BackgroundTransparency = 1
-	Tabs.ScrollBarThickness = 0
-	Instance.new("UIListLayout", Tabs).Padding = UDim.new(0, 8)
-
-	local Container = Instance.new("ScrollingFrame", Main)
-	Container.Size = UDim2.new(1, -160, 1, -20)
-	Container.Position = UDim2.new(0, 150, 0, 10)
-	Container.BackgroundColor3 = CurrentTheme.Container
-	Container.ScrollBarThickness = 2
-	Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 8)
-	local CL = Instance.new("UIListLayout", Container)
-	CL.Padding = UDim.new(0, 8)
-	CL.HorizontalAlignment = Enum.HorizontalAlignment.Center
-
-	UI._Tabs = Tabs
-	UI._Container = Container
-	UI._Main = Main
-	UI._Gui = ScreenGui
+-- Button
+function UISuite:CreateButton(tabName, text, callback)
+    local button = Instance.new("TextButton")
+    button.Text = text
+    button.Size = UDim2.new(0, 236, 0, 42)
+    button.BackgroundColor3 = Color3.fromRGB(132, 132, 132)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.FontFace = Font.new([[rbxasset://fonts/families/Arial.json]])
+    button.TextWrapped = true
+    Instance.new("UICorner", button)
+    local stroke = Instance.new("UIStroke", button)
+    stroke.Thickness = 1.6
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    if callback then
+        button.Activated:Connect(callback)
+    end
+    AddElement(tabName, button)
+    return button
 end
 
-function UI:InsertSection(Text)
-	local Tab = Instance.new("TextButton", UI._Tabs)
-	Tab.Size = UDim2.new(1, -10, 0, 35)
-	Tab.Text = Text
-	Tab.BackgroundColor3 = CurrentTheme.Tab
-	Tab.TextColor3 = CurrentTheme.Text
-	Instance.new("UICorner", Tab)
-	
-	local Folder = Instance.new("Folder", UI._Gui)
-	Sections[Text] = Folder
-	
-	Tab.MouseButton1Click:Connect(function()
-		UI._Container:ClearAllChildren()
-		local L = Instance.new("UIListLayout", UI._Container)
-		L.Padding = UDim.new(0, 8)
-		L.HorizontalAlignment = Enum.HorizontalAlignment.Center
-		for _, v in ipairs(Folder:GetChildren()) do
-			v.Parent = UI._Container
-		end
-	end)
-	CurrentSection = Text
+-- Label
+function UISuite:CreateLabel(tabName, text)
+    local label = Instance.new("TextLabel")
+    label.Text = text
+    label.Size = UDim2.new(0, 236, 0, 42)
+    label.BackgroundColor3 = Color3.fromRGB(132, 132, 132)
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.FontFace = Font.new([[rbxasset://fonts/families/Arial.json]])
+    label.TextWrapped = true
+    Instance.new("UICorner", label)
+    local stroke = Instance.new("UIStroke", label)
+    stroke.Thickness = 1.6
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    AddElement(tabName, label)
+    return label
 end
 
-function UI:InsertButton(Text, Callback)
-	local Button = Instance.new("TextButton")
-	Button.Text = Text
-	StyleElement(Button)
-	Button.MouseButton1Click:Connect(function() if Callback then Callback() end end)
-	Button.Parent = Sections[CurrentSection]
+-- Toggle
+function UISuite:CreateToggle(tabName, text, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 236, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(132, 132, 132)
+    Instance.new("UICorner", frame)
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Thickness = 1.6
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local label = Instance.new("TextLabel", frame)
+    label.Text = text
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.FontFace = Font.new([[rbxasset://fonts/families/Arial.json]])
+    label.TextWrapped = true
+
+    local toggle = Instance.new("TextButton", frame)
+    toggle.Size = UDim2.new(0.3, -4, 1, -4)
+    toggle.Position = UDim2.new(0.7, 2, 0, 2)
+    toggle.Text = "OFF"
+    toggle.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", toggle)
+
+    toggle.Activated:Connect(function()
+        if toggle.Text == "OFF" then
+            toggle.Text = "ON"
+            if callback then callback(true) end
+        else
+            toggle.Text = "OFF"
+            if callback then callback(false) end
+        end
+    end)
+
+    AddElement(tabName, frame)
+    return frame
 end
 
-function UI:InsertLabel(Text)
-	local Label = Instance.new("TextLabel")
-	Label.Text = Text
-	StyleElement(Label)
-	Label.Parent = Sections[CurrentSection]
+-- Dropdown
+function UISuite:CreateDropdown(tabName, text, options, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 236, 0, 42)
+    frame.BackgroundColor3 = Color3.fromRGB(132, 132, 132)
+    Instance.new("UICorner", frame)
+    local stroke = Instance.new("UIStroke", frame)
+    stroke.Thickness = 1.6
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+
+    local label = Instance.new("TextLabel", frame)
+    label.Text = text
+    label.Size = UDim2.new(0.7, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.FontFace = Font.new([[rbxasset://fonts/families/Arial.json]])
+    label.TextWrapped = true
+
+    local dropdown = Instance.new("TextButton", frame)
+    dropdown.Size = UDim2.new(0.3, -4, 1, -4)
+    dropdown.Position = UDim2.new(0.7, 2, 0, 2)
+    dropdown.Text = options[1] or ""
+    dropdown.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    dropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Instance.new("UICorner", dropdown)
+
+    dropdown.Activated:Connect(function()
+        local currentIndex = table.find(options, dropdown.Text)
+        currentIndex = currentIndex and currentIndex + 1 or 1
+        if currentIndex > #options then currentIndex = 1 end
+        dropdown.Text = options[currentIndex]
+        if callback then callback(dropdown.Text) end
+    end)
+
+    AddElement(tabName, frame)
+    return frame
 end
 
-function UI:InsertToggle(Text, Callback)
-	local Toggled = false
-	local ToggleFrame = Instance.new("TextButton")
-	ToggleFrame.Text = "  " .. Text
-	ToggleFrame.TextXAlignment = Enum.TextXAlignment.Left
-	StyleElement(ToggleFrame)
+-- Textbox
+function UISuite:CreateTextbox(tabName, placeholder, callback)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(0, 236, 0, 42)
+    box.BackgroundColor3 = Color3.fromRGB(132, 132, 132)
+    box.TextColor3 = Color3.fromRGB(255, 255, 255)
+    box.PlaceholderText = placeholder or ""
+    box.FontFace = Font.new([[rbxasset://fonts/families/Arial.json]])
+    box.TextWrapped = true
+    Instance.new("UICorner", box)
+    local stroke = Instance.new("UIStroke", box)
+    stroke.Thickness = 1.6
+    stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
 
-	local Track = Instance.new("Frame", ToggleFrame)
-	Track.Size = UDim2.new(0, 40, 0, 20)
-	Track.Position = UDim2.new(1, -50, 0.5, -10)
-	Track.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
+    box.FocusLost:Connect(function(enterPressed)
+        if enterPressed and callback then
+            callback(box.Text)
+        end
+    end)
 
-	local Knob = Instance.new("Frame", Track)
-	Knob.Size = UDim2.new(0, 16, 0, 16)
-	Knob.Position = UDim2.new(0, 2, 0.5, -8)
-	Knob.BackgroundColor3 = Color3.new(1, 1, 1)
-	Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
-
-	ToggleFrame.MouseButton1Click:Connect(function()
-		Toggled = not Toggled
-		local targetPos = Toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-		local targetColor = Toggled and CurrentTheme.Accent or Color3.fromRGB(50, 50, 50)
-		
-		TweenService:Create(Knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
-		TweenService:Create(Track, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundColor3 = targetColor}):Play()
-		
-		if Callback then Callback(Toggled) end
-	end)
-	ToggleFrame.Parent = Sections[CurrentSection]
+    AddElement(tabName, box)
+    return box
 end
 
-function UI:InsertTheme(Text)
-	local ThemeBtn = Instance.new("TextButton")
-	ThemeBtn.Text = "Theme: " .. Text
-	StyleElement(ThemeBtn)
-	ThemeBtn.MouseButton1Click:Connect(function()
-		if Themes[Text] then
-			CurrentTheme = Themes[Text]
-			UI:UpdateTheme()
-			UI._Container:ClearAllChildren()
-			local L = Instance.new("UIListLayout", UI._Container)
-			L.Padding = UDim.new(0, 8)
-			L.HorizontalAlignment = Enum.HorizontalAlignment.Center
-		end
-	end)
-	ThemeBtn.Parent = Sections[CurrentSection]
-end
+-- Minimize
+LMG2L["Minimize Button_1a"].Activated:Connect(function()
+    LMG2L["Main Frame_2"].Visible = not LMG2L["Main Frame_2"].Visible
+end)
+
+-- Fullsize
+LMG2L["Fullsize Button_1d"].Activated:Connect(function()
+    local frame = LMG2L["Main Frame_2"]
+    if frame.Size == UDim2.new(0, 404, 0, 252) then
+        frame.Size = UDim2.new(0, 200, 0, 126)
+    else
+        frame.Size = UDim2.new(0, 404, 0, 252)
+    end
+end)
+
+return LMG2L["ScreenGui_1"], UISuite
