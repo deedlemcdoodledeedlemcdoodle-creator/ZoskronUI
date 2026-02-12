@@ -1,119 +1,159 @@
-local UIS = game:GetService("UserInputService")
-local TS = game:GetService("TweenService")
-local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
-local LocalPlayer = Players.LocalPlayer
-local Icons = {}
-pcall(function()
-    Icons = loadstring(game:HttpGet("https://raw.githubusercontent.com/deedlemcdoodledeedlemcdoodle-creator/SpectravaxHub/refs/heads/main/everylucideassetin.lua"))()
-end)
+local UI = {}
+local Sections = {}
+local CurrentSection = nil
 
-local Aether = {
-    Themes = {
-        Dark = {Main = Color3.fromRGB(18, 18, 20), Accent = Color3.fromRGB(115, 90, 255), Text = Color3.fromRGB(180, 180, 185), Secondary = Color3.fromRGB(28, 28, 32), BoldText = Color3.fromRGB(255, 255, 255)},
-        Amber = {Main = Color3.fromRGB(22, 18, 12), Accent = Color3.fromRGB(255, 180, 50), Text = Color3.fromRGB(200, 190, 180), Secondary = Color3.fromRGB(35, 30, 25), BoldText = Color3.fromRGB(255, 255, 255)},
-        Amethyst = {Main = Color3.fromRGB(18, 15, 28), Accent = Color3.fromRGB(180, 100, 255), Text = Color3.fromRGB(190, 180, 200), Secondary = Color3.fromRGB(30, 25, 40), BoldText = Color3.fromRGB(255, 255, 255)}
-    },
-    Config = {}
+local Themes = {
+	Dark = {Main=Color3.fromRGB(24,24,24),Container=Color3.fromRGB(35,35,35),Element=Color3.fromRGB(132,132,132),Tab=Color3.fromRGB(66,66,66),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(0,170,255)},
+	Ocean = {Main=Color3.fromRGB(18,33,43),Container=Color3.fromRGB(24,52,70),Element=Color3.fromRGB(40,90,120),Tab=Color3.fromRGB(30,70,90),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(0,255,200)},
+	Blood = {Main=Color3.fromRGB(30,0,0),Container=Color3.fromRGB(45,5,5),Element=Color3.fromRGB(120,20,20),Tab=Color3.fromRGB(80,10,10),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(255,0,0)},
+	Nature = {Main=Color3.fromRGB(20,35,20),Container=Color3.fromRGB(30,50,30),Element=Color3.fromRGB(60,100,60),Tab=Color3.fromRGB(45,80,45),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(150,255,150)},
+	Midnight = {Main=Color3.fromRGB(10,10,20),Container=Color3.fromRGB(15,15,30),Element=Color3.fromRGB(45,45,85),Tab=Color3.fromRGB(30,30,60),Text=Color3.fromRGB(255,255,255),Accent=Color3.fromRGB(140,100,255)}
 }
 
-function Aether:CreateWindow(cfg)
-    local Win = {Theme = self.Themes[cfg.Theme or "Dark"], Tabs = {}, Folder = cfg.Name or "zKron"}
-    if makefolder then pcall(function() makefolder(Win.Folder) end) end
+local CurrentTheme = Themes.Dark
 
-    local SG = Instance.new("ScreenGui", CoreGui)
-    SG.Name = "zKron_Suite"
-    
-    local Main = Instance.new("Frame", SG)
-    Main.Size, Main.Position, Main.BackgroundColor3 = UDim2.new(0, 420, 0, 320), UDim2.new(0.5, -210, 0.5, -160), Win.Theme.Main
-    Instance.new("UICorner", Main)
-    Instance.new("UIStroke", Main).Color = Win.Theme.Secondary
-
-    local Sidebar = Instance.new("Frame", Main)
-    Sidebar.Size, Sidebar.BackgroundColor3 = UDim2.new(0, 110, 1, 0), Win.Theme.Secondary
-    Instance.new("UICorner", Sidebar)
-
-    local TabScroll = Instance.new("ScrollingFrame", Sidebar)
-    TabScroll.Size, TabScroll.Position, TabScroll.BackgroundTransparency, TabScroll.ScrollBarThickness = UDim2.new(1, 0, 1, -110), UDim2.new(0, 0, 0, 10), 1, 0
-    Instance.new("UIListLayout", TabScroll).HorizontalAlignment = "Center"
-    Instance.new("UIListLayout", TabScroll).Padding = UDim.new(0, 5)
-
-    local BottomSection = Instance.new("Frame", Sidebar)
-    BottomSection.Size, BottomSection.Position, BottomSection.BackgroundTransparency = UDim2.new(1, 0, 0, 90), UDim2.new(0, 0, 1, -95), 1
-
-    local PFP = Instance.new("ImageLabel", BottomSection)
-    PFP.Size, PFP.Position = UDim2.new(0, 45, 0, 45), UDim2.new(0.5, -22, 0, 0)
-    PFP.Image = Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size150x150)
-    Instance.new("UICorner", PFP).CornerRadius = UDim.new(1, 0)
-
-    local CheckBtn = Instance.new("TextButton", BottomSection)
-    CheckBtn.Size, CheckBtn.Position = UDim2.new(0, 80, 0, 30), UDim2.new(0.5, -40, 0, 50)
-    CheckBtn.Text, CheckBtn.BackgroundColor3, CheckBtn.TextColor3 = "Check", Win.Theme.Main, Win.Theme.Text
-    CheckBtn.Font, CheckBtn.TextSize = "GothamBold", 12
-    Instance.new("UICorner", CheckBtn)
-
-    local SearchBox = Instance.new("TextBox", Main)
-    SearchBox.Size, SearchBox.Position, SearchBox.BackgroundColor3 = UDim2.new(1, -135, 0, 25), UDim2.new(0, 125, 0, 10), Win.Theme.Secondary
-    SearchBox.PlaceholderText, SearchBox.Text, SearchBox.TextColor3, SearchBox.Font, SearchBox.TextSize, SearchBox.Visible = "Search...", "", Win.Theme.Text, "Gotham", 12, false
-    Instance.new("UICorner", SearchBox)
-
-    local Container = Instance.new("Frame", Main)
-    Container.Size, Container.Position, Container.BackgroundTransparency = UDim2.new(1, -125, 1, -20), UDim2.new(0, 120, 0, 10), 1
-
-    local UserInfoPage = Instance.new("Frame", Container)
-    UserInfoPage.Size, UserInfoPage.BackgroundTransparency = UDim2.new(1, 0, 1, 0), 1
-    local bc = "rgb("..math.floor(Win.Theme.BoldText.R*255)..","..math.floor(Win.Theme.BoldText.G*255)..","..math.floor(Win.Theme.BoldText.B*255)..")"
-    local info = Instance.new("TextLabel", UserInfoPage)
-    info.Size, info.BackgroundTransparency, info.TextColor3, info.Font, info.TextSize, info.RichText = UDim2.new(1, 0, 1, 0), 1, Win.Theme.Text, "Gotham", 14, true
-    info.Text = "Display: <font color='"..bc.."'><b>"..LocalPlayer.DisplayName.."</b></font>\nUser: <font color='"..bc.."'><b>"..LocalPlayer.Name.."</b></font>\nAge: <font color='"..bc.."'><b>".. (LocalPlayer.AccountAge % 365) .."d, ".. math.floor(LocalPlayer.AccountAge / 365) .."y</b></font>"
-
-    local MainSuitePage = Instance.new("Frame", Container)
-    MainSuitePage.Size, MainSuitePage.BackgroundTransparency, MainSuitePage.Visible = UDim2.new(1, 0, 1, 0), 1, false
-    local PageLayout = Instance.new("ScrollingFrame", MainSuitePage)
-    PageLayout.Size, PageLayout.BackgroundTransparency, PageLayout.ScrollBarThickness, PageLayout.Position = UDim2.new(1, 0, 1, -40), 1, 0, UDim2.new(0,0,0,40)
-    Instance.new("UIListLayout", PageLayout).Padding = UDim.new(0, 5)
-
-    CheckBtn.Activated:Connect(function()
-        UserInfoPage.Visible = false
-        MainSuitePage.Visible = true
-        SearchBox.Visible = true
-        Container.Position = UDim2.new(0, 120, 0, 45)
-    end)
-
-    function Win:CreateTab(name)
-        local T = {Elements = {}}
-        local b = Instance.new("TextButton", TabScroll)
-        b.Size, b.Text, b.BackgroundColor3, b.TextColor3 = UDim2.new(0.85, 0, 0, 30), name, Win.Theme.Main, Win.Theme.Text
-        Instance.new("UICorner", b)
-        
-        b.Activated:Connect(function()
-            for _, v in pairs(Win.Tabs) do v.b.TextColor3 = Win.Theme.Text end
-            b.TextColor3 = Win.Theme.Accent
-            Win.CurrentTab = T
-        end)
-        
-        T.b = b
-        table.insert(Win.Tabs, T)
-        if #Win.Tabs == 1 then b.TextColor3 = Win.Theme.Accent Win.CurrentTab = T end
-
-        function T:Button(n, ico, cb)
-            local btn = Instance.new("TextButton", PageLayout)
-            btn.Size, btn.BackgroundColor3, btn.Text, btn.TextColor3 = UDim2.new(0.95, 0, 0, 35), Win.Theme.Secondary, "      "..n, Win.Theme.Text
-            btn.TextXAlignment = "Left"; Instance.new("UICorner", btn)
-            if ico and Icons[ico] then
-                local i = Instance.new("ImageLabel", btn)
-                i.Size, i.Position, i.Image, i.BackgroundTransparency, i.ImageColor3 = UDim2.new(0, 20, 0, 20), UDim2.new(0, 5, 0.5, -10), Icons[ico], 1, Win.Theme.Accent
-            end
-            btn.Activated:Connect(cb)
-            table.insert(T.Elements, {Instance = btn, Name = n:lower()})
-        end
-
-        return T
-    end
-
-    return Win
+function UI:UpdateTheme()
+	if not UI._Main then return end
+	UI._Main.BackgroundColor3 = CurrentTheme.Main
+	UI._Container.BackgroundColor3 = CurrentTheme.Container
+	for _, tab in ipairs(UI._Tabs:GetChildren()) do
+		if tab:IsA("TextButton") then tab.BackgroundColor3 = CurrentTheme.Tab end
+	end
 end
 
-return Aether
+function UI:Launch()
+	local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+	ScreenGui.Name = "BasicInterfaceSuite"
+	ScreenGui.ResetOnSpawn = false
+	
+	local Main = Instance.new("Frame", ScreenGui)
+	Main.Size = UDim2.new(0, 450, 0, 300)
+	Main.Position = UDim2.new(0.5, -225, 0.5, -150)
+	Main.BackgroundColor3 = CurrentTheme.Main
+	Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
+
+	local Tabs = Instance.new("ScrollingFrame", Main)
+	Tabs.Size = UDim2.new(0, 130, 1, -20)
+	Tabs.Position = UDim2.new(0, 10, 0, 10)
+	Tabs.BackgroundTransparency = 1
+	Tabs.ScrollBarThickness = 0
+	local TL = Instance.new("UIListLayout", Tabs)
+	TL.Padding = UDim.new(0, 8)
+
+	local Container = Instance.new("ScrollingFrame", Main)
+	Container.Size = UDim2.new(1, -160, 1, -20)
+	Container.Position = UDim2.new(0, 150, 0, 10)
+	Container.BackgroundColor3 = CurrentTheme.Container
+	Container.ScrollBarThickness = 2
+	Instance.new("UICorner", Container).CornerRadius = UDim.new(0, 8)
+	local CL = Instance.new("UIListLayout", Container)
+	CL.Padding = UDim.new(0, 8)
+	CL.HorizontalAlignment = Enum.HorizontalAlignment.Center
+
+	UI._Tabs = Tabs
+	UI._Container = Container
+	UI._Main = Main
+	UI._Gui = ScreenGui
+end
+
+function UI:Insert(Type, Text, Callback)
+	local function Style(obj)
+		obj.Size = UDim2.new(0, 260, 0, 40)
+		obj.BackgroundColor3 = CurrentTheme.Element
+		obj.TextColor3 = CurrentTheme.Text
+		obj.FontFace = Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Bold)
+		obj.TextSize = 16
+		Instance.new("UICorner", obj).CornerRadius = UDim.new(0, 6)
+		local s = Instance.new("UIStroke", obj)
+		s.Thickness = 1.5
+		s.Transparency = 0.6
+	end
+
+	if Type == "Section" then
+		local Tab = Instance.new("TextButton", UI._Tabs)
+		Tab.Size = UDim2.new(1, -10, 0, 35)
+		Tab.Text = Text
+		Tab.BackgroundColor3 = CurrentTheme.Tab
+		Tab.TextColor3 = CurrentTheme.Text
+		Instance.new("UICorner", Tab)
+		
+		local Folder = Instance.new("Folder", UI._Gui)
+		Sections[Text] = Folder
+		
+		Tab.MouseButton1Click:Connect(function()
+			UI._Container:ClearAllChildren()
+			local L = Instance.new("UIListLayout", UI._Container)
+			L.Padding = UDim.new(0, 8)
+			L.HorizontalAlignment = Enum.HorizontalAlignment.Center
+			for _, v in ipairs(Folder:GetChildren()) do
+				v.Parent = UI._Container
+			end
+		end)
+		CurrentSection = Text
+
+	elseif Type == "Button" then
+		local Button = Instance.new("TextButton")
+		Button.Text = Text
+		Style(Button)
+		Button.MouseButton1Click:Connect(function() if Callback then Callback() end end)
+		Button.Parent = Sections[CurrentSection]
+
+	elseif Type == "Label" then
+		local Label = Instance.new("TextLabel")
+		Label.Text = Text
+		Style(Label)
+		Label.Parent = Sections[CurrentSection]
+
+	elseif Type == "Toggle" then
+		local Toggled = false
+		local ToggleFrame = Instance.new("TextButton")
+		ToggleFrame.Text = "  " .. Text
+		ToggleFrame.TextXAlignment = Enum.TextXAlignment.Left
+		Style(ToggleFrame)
+
+		local Track = Instance.new("Frame", ToggleFrame)
+		Track.Size = UDim2.new(0, 40, 0, 20)
+		Track.Position = UDim2.new(1, -50, 0.5, -10)
+		Track.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+		Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
+
+		local Knob = Instance.new("Frame", Track)
+		Knob.Size = UDim2.new(0, 16, 0, 16)
+		Knob.Position = UDim2.new(0, 2, 0.5, -8)
+		Knob.BackgroundColor3 = Color3.new(1, 1, 1)
+		Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
+
+		ToggleFrame.MouseButton1Click:Connect(function()
+			Toggled = not Toggled
+			local targetPos = Toggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+			local targetColor = Toggled and CurrentTheme.Accent or Color3.fromRGB(50, 50, 50)
+			
+			TweenService:Create(Knob, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {Position = targetPos}):Play()
+			TweenService:Create(Track, TweenInfo.new(0.2, Enum.EasingStyle.Quart), {BackgroundColor3 = targetColor}):Play()
+			
+			if Callback then Callback(Toggled) end
+		end)
+		ToggleFrame.Parent = Sections[CurrentSection]
+
+	elseif Type == "Theme" then
+		local ThemeBtn = Instance.new("TextButton")
+		ThemeBtn.Text = "Theme: " .. Text
+		Style(ThemeBtn)
+		ThemeBtn.MouseButton1Click:Connect(function()
+			if Themes[Text] then
+				CurrentTheme = Themes[Text]
+				UI:UpdateTheme()
+				UI._Container:ClearAllChildren()
+				local L = Instance.new("UIListLayout", UI._Container)
+				L.Padding = UDim.new(0, 8)
+				L.HorizontalAlignment = Enum.HorizontalAlignment.Center
+			end
+		end)
+		ThemeBtn.Parent = Sections[CurrentSection]
+	end
+end
